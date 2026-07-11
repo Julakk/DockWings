@@ -1,0 +1,21 @@
+# Binary hasil build
+/bin/
+/wings
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Coverage
+*.out
+
+# Config asli (ada auth_token rahasia)
+config.json
+
+# Editor
+.vscode/
+.idea/

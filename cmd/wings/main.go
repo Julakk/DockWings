@@ -1,0 +1,36 @@
+package main
+
+import (
+	"flag"
+	"log"
+	"net/http"
+
+	"github.com/Julakk/DockWings/internal/api"
+	"github.com/Julakk/DockWings/internal/config"
+	"github.com/Julakk/DockWings/internal/docker"
+	"github.com/Julakk/DockWings/internal/server"
+)
+
+func main() {
+	configPath := flag.String("config", "config.json", "path ke file config JSON")
+	flag.Parse()
+
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		log.Fatalf("gagal load config: %v", err)
+	}
+
+	mgr := server.NewManager()
+
+	// TODO: ganti ke DockerEnvironment asli begitu development lanjut
+	// ke tahap integrasi Docker (butuh VPS buat testing).
+	env := docker.NewStubEnvironment()
+
+	router := api.NewRouter(mgr, env, cfg.AuthToken)
+
+	log.Printf("DockWings jalan di %s (stub environment — belum kontrol Docker beneran)", cfg.ListenAddr)
+
+	if err := http.ListenAndServe(cfg.ListenAddr, router); err != nil {
+		log.Fatalf("server berhenti: %v", err)
+	}
+}
