@@ -31,3 +31,4 @@ Semua perubahan penting di project ini dicatat di sini.
 - [ ] WebSocket console real-time (butuh VPS)
 - [ ] Resource usage reporting (CPU/RAM/Disk) balik ke Panel (butuh VPS)
 - [ ] Testing end-to-end `WingsService` (Panel) ↔ DockWings (butuh VPS)
+- Tambah job CI integration test

@@ -24,11 +24,11 @@ func main() {
 
 	// TODO: ganti ke DockerEnvironment asli begitu development lanjut
 	// ke tahap integrasi Docker (butuh VPS buat testing).
-	env := docker.NewStubEnvironment()
+	env := docker.NewDockerEnvironment("/var/lib/dockwings/servers")
 
 	router := api.NewRouter(mgr, env, cfg.AuthToken)
 
-	log.Printf("DockWings jalan di %s (stub environment — belum kontrol Docker beneran)", cfg.ListenAddr)
+	log.Printf("DockWings jalan di %s (Docker environment)", cfg.ListenAddr)
 
 	if err := http.ListenAndServe(cfg.ListenAddr, router); err != nil {
 		log.Fatalf("server berhenti: %v", err)
