@@ -21,8 +21,9 @@ func NewHandlers(mgr *server.Manager, env docker.Environment) *Handlers {
 type createServerRequest struct {
 	UUID      string `json:"uuid"`
 	Container struct {
-		Image          string `json:"image"`
-		StartupCommand string `json:"startup_command"`
+		Image          string            `json:"image"`
+		StartupCommand string            `json:"startup_command"`
+		EnvVariables   map[string]string `json:"env_variables"`
 	} `json:"container"`
 	Build struct {
 		MemoryLimit int64   `json:"memory_limit"`
@@ -55,6 +56,7 @@ func (h *Handlers) CreateServer(w http.ResponseWriter, r *http.Request) {
 		UUID:            req.UUID,
 		Image:           req.Container.Image,
 		StartupCommand:  req.Container.StartupCommand,
+		EnvVariables:    req.Container.EnvVariables,
 		MemoryLimitMB:   req.Build.MemoryLimit,
 		SwapMB:          req.Build.Swap,
 		IOWeight:        req.Build.IOWeight,
