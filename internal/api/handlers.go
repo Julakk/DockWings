@@ -21,8 +21,8 @@ func NewHandlers(mgr *server.Manager, env docker.Environment) *Handlers {
 type createServerRequest struct {
 	UUID      string `json:"uuid"`
 	Container struct {
-		Image           string `json:"image"`
-		StartupCommand  string `json:"startup_command"`
+		Image          string `json:"image"`
+		StartupCommand string `json:"startup_command"`
 	} `json:"container"`
 	Build struct {
 		MemoryLimit int64   `json:"memory_limit"`
@@ -41,8 +41,13 @@ func (h *Handlers) CreateServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.UUID == "" {
-		writeError(w, http.StatusBadRequest, "uuid wajib diisi")
+	if !validUUID(req.UUID) {
+		writeError(w, http.StatusBadRequest, "uuid nggak valid")
+		return
+	}
+
+	if !validImage(req.Container.Image) {
+		writeError(w, http.StatusBadRequest, "image nggak valid")
 		return
 	}
 

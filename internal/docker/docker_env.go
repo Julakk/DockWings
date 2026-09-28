@@ -59,6 +59,9 @@ func (e *DockerEnvironment) Create(_ context.Context, s *server.Server) error {
 		"-i", // stdin tetap terbuka, dipakai SendCommand
 		"-v", dir + ":/home/container",
 		"-w", "/home/container",
+		"--cap-drop=ALL",
+		"--security-opt=no-new-privileges",
+		"--pids-limit=512",
 	}
 	if s.MemoryLimitMB > 0 {
 		args = append(args, fmt.Sprintf("--memory=%dm", s.MemoryLimitMB))
