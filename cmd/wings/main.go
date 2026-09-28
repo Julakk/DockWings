@@ -20,7 +20,7 @@ func main() {
 		log.Fatalf("gagal load config: %v", err)
 	}
 
-	mgr := server.NewManager()
+	mgr := server.NewPersistentManager("/var/lib/dockwings/servers.json")
 
 	// TODO: ganti ke DockerEnvironment asli begitu development lanjut
 	// ke tahap integrasi Docker (butuh VPS buat testing).
