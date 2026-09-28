@@ -24,6 +24,7 @@ func NewRouter(mgr *server.Manager, env docker.Environment, authToken string) ht
 	mux.HandleFunc("POST /api/servers", h.CreateServer)
 	mux.HandleFunc("POST /api/servers/{uuid}/power", h.Power)
 	mux.HandleFunc("POST /api/servers/{uuid}/commands", h.SendCommand)
+	mux.HandleFunc("GET /api/servers/{uuid}/resources", h.Resources)
 	mux.HandleFunc("DELETE /api/servers/{uuid}", h.DeleteServer)
 
 	return middleware.RequireAuth(authToken, mux)

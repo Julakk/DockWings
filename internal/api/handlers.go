@@ -185,3 +185,29 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 func writeError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, map[string]string{"error": message})
 }
+
+// GET /api/servers/{uuid}/resources — dipanggil App\Services\ServerResourceService di Panel
+func (h *Handlers) Resources(w http.ResponseWriter, r *http.Request) {
+	uuid := r.PathValue("uuid")
+
+	s, err := h.Manager.Get(uuid)
+	if err != nil {
+		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	res, err := h.Env.Resources(r.Context(), s)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"current_state": res.State,
+		"utilization": map[string]any{
+			"cpu_absolute": res.CPUAbsolute,
+			"memory_bytes": res.MemoryBytes,
+			"disk_bytes":   res.DiskBytes,
+		},
+	})
+}

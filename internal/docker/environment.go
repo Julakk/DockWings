@@ -30,4 +30,7 @@ type Environment interface {
 
 	// SendCommand ngirim command ke stdin container (console command kayak "say halo").
 	SendCommand(ctx context.Context, s *server.Server, command string) error
+
+	// Resources ambil state + utilization CPU/mem/disk terkini.
+	Resources(ctx context.Context, s *server.Server) (Resources, error)
 }

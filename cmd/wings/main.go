@@ -24,7 +24,7 @@ func main() {
 
 	// TODO: ganti ke DockerEnvironment asli begitu development lanjut
 	// ke tahap integrasi Docker (butuh VPS buat testing).
-	env := docker.NewDockerEnvironment("/var/lib/dockwings/servers")
+	env := docker.NewDockerEnvironment(cfg.DataDirectory)
 
 	router := api.NewRouter(mgr, env, cfg.AuthToken)
 

@@ -48,3 +48,8 @@ func (e *StubEnvironment) SendCommand(ctx context.Context, s *server.Server, com
 	log.Printf("[stub] kirim command ke %s: %s", s.ContainerName(), command)
 	return nil
 }
+
+func (e *StubEnvironment) Resources(ctx context.Context, s *server.Server) (Resources, error) {
+	log.Printf("[stub] resources %s", s.ContainerName())
+	return Resources{State: "unknown"}, nil
+}
