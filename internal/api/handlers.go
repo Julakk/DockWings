@@ -32,6 +32,7 @@ type createServerRequest struct {
 		CPULimit    float64 `json:"cpu_limit"`
 		DiskSpace   int64   `json:"disk_space"`
 	} `json:"build"`
+	Allocations []server.Allocation `json:"allocations"`
 }
 
 // POST /api/servers — sesuai WingsService::createServer()
@@ -57,6 +58,7 @@ func (h *Handlers) CreateServer(w http.ResponseWriter, r *http.Request) {
 		Image:           req.Container.Image,
 		StartupCommand:  req.Container.StartupCommand,
 		EnvVariables:    req.Container.EnvVariables,
+		Allocations:     req.Allocations,
 		MemoryLimitMB:   req.Build.MemoryLimit,
 		SwapMB:          req.Build.Swap,
 		IOWeight:        req.Build.IOWeight,

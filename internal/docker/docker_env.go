@@ -77,6 +77,26 @@ func (e *DockerEnvironment) Create(_ context.Context, s *server.Server) error {
 	if s.IOWeight >= 10 && s.IOWeight <= 1000 {
 		args = append(args, fmt.Sprintf("--blkio-weight=%d", s.IOWeight))
 	}
+
+	// Mapping port: 1:1 host->container (ngikutin konvensi Pterodactyl,
+	// nggak ada remapping). SERVER_IP/SERVER_PORT di-inject dari allocation
+	// primary biar startup command / app di dalam container tau mau bind ke mana.
+	for _, a := range s.Allocations {
+		bindIP := a.IP
+		if bindIP == "" {
+			bindIP = "0.0.0.0"
+		}
+		args = append(args, "-p", fmt.Sprintf("%s:%d:%d/tcp", bindIP, a.Port, a.Port))
+		args = append(args, "-p", fmt.Sprintf("%s:%d:%d/udp", bindIP, a.Port, a.Port))
+	}
+	if primary := s.PrimaryAllocation(); primary != nil {
+		serverIP := primary.IP
+		if serverIP == "" {
+			serverIP = "0.0.0.0"
+		}
+		args = append(args, "-e", "SERVER_IP="+serverIP)
+		args = append(args, "-e", fmt.Sprintf("SERVER_PORT=%d", primary.Port))
+	}
 	for k, v := range s.EnvVariables {
 		args = append(args, "-e", k+"="+v)
 	}
