@@ -26,7 +26,7 @@ func main() {
 	// ke tahap integrasi Docker (butuh VPS buat testing).
 	env := docker.NewDockerEnvironment(cfg.DataDirectory)
 
-	router := api.NewRouter(mgr, env, cfg.AuthToken)
+	router := api.NewRouter(mgr, env, cfg.AuthToken, api.WithFilesRoot(cfg.DataDirectory))
 
 	log.Printf("DockWings jalan di %s (Docker environment)", cfg.ListenAddr)
 
