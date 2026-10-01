@@ -3,8 +3,8 @@ package docker
 import (
 	"context"
 
-	"github.com/Julakk/DockWings/internal/server"
 	"fmt"
+	"github.com/Julakk/DockWings/internal/server"
 	"os/exec"
 	"path/filepath"
 	"regexp"
