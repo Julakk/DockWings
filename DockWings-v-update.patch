@@ -1,0 +1,272 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 4f91f67..ad9298a 100755
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -2,6 +2,19 @@
+ 
+ Semua perubahan penting di project ini dicatat di sini.
+ 
++## [0.2.0] - 2026-10-02
++
++> "Sekarang bisa HTTPS beneran, dan Panel bisa nanya versi daemon." 🐧
++
++### Added
++- Dukungan TLS opsional lewat blok `ssl` di `config.json` (`enabled`, `cert`, `key`), mirip `api.ssl` di Wings Pterodactyl. Kalau `enabled: true`, scheme Node di Panel harus `https`; kalau `false` (default), scheme Node harus `http`.
++- Endpoint `GET /api/system` (butuh Bearer token): versi daemon, OS, arsitektur, jumlah CPU, dan jumlah server. Dipakai Panel v0.9.0+ buat nampilin versi dan status node.
++- Versi daemon dipusatin di `internal/version` dan muncul di log pas startup. Bisa di-override pas build lewat `-ldflags`.
++- Test buat `/api/system` (respon 200 dengan token, 401 tanpa token).
++
++### Fixed
++- Validasi config: `ssl.enabled` tanpa `cert`/`key` sekarang ditolak saat startup dengan pesan jelas.
++
+ ## [0.1.0] - 2026-07-12
+ 
+ > "Belum bisa kontrol Docker beneran, tapi kerangkanya udah berdiri." 🐧
+diff --git a/README.md b/README.md
+index ce7540c..93018aa 100644
+--- a/README.md
++++ b/README.md
+@@ -6,22 +6,20 @@ Dikembangkan oleh **Julak Junior** ([@Julakk](https://github.com/Julakk)). Repo
+ 
+ ---
+ 
+-## Status: Skeleton Awal ⚠️
++## Status: v0.2.0
+ 
+-Repo ini baru berisi **struktur dasar & interface**, belum ada implementasi Docker beneran. Alasannya: development DockPanel sepenuhnya dari HP via Termux, dan **Docker nggak bisa jalan di Termux/Android**. Jadi bagian ini nunggu VPS tersedia buat development & testing lanjutan.
++Daemon udah punya kontrol Docker asli (`DockerEnvironment`), resource usage (CPU/RAM/disk), console WebSocket real-time, file manager API, dan dukungan port allocation. Mulai v0.2.0 ada TLS opsional dan endpoint `/api/system` buat versi daemon.
+ 
+-Yang udah ada sekarang:
+-- ✅ Struktur project & routing HTTP API
+-- ✅ Interface `Environment` (abstraksi kontrol container) + implementasi stub (cuma logging)
+-- ✅ Auth middleware (validasi token dari Panel)
+-- ✅ Endpoint API yang cocok sama `WingsService.php` di Panel
+-- ✅ CI (build + vet + test) via GitHub Actions
++Catatan: Docker nggak bisa jalan di Termux/Android, jadi daemon ini harus dijalanin dan dites di VPS Linux.
+ 
+-Yang belum:
+-- ❌ Implementasi Docker asli (`DockerEnvironment`) — butuh Docker SDK + VPS buat testing
+-- ❌ SFTP server
+-- ❌ WebSocket console real-time
+-- ❌ Resource usage reporting (CPU/RAM/disk) balik ke Panel
++### Scheme Node di Panel harus cocok sama config Wings
++
++| `ssl.enabled` di Wings | Scheme Node di Panel |
++| ---------------------- | -------------------- |
++| `false` (default)      | `http`               |
++| `true`                 | `https`              |
++
++Kalau nggak cocok, Panel nampilin `cURL error 35 ... wrong version number`.
+ 
+ ## Arsitektur
+ 
+@@ -47,6 +45,16 @@ Semua endpoint butuh header `Authorization: Bearer {auth_token}` (token yang sam
+ | POST | `/api/servers/{uuid}/commands` | Kirim command ke console |
+ | DELETE | `/api/servers/{uuid}` | Hapus server |
+ 
++## Konfigurasi TLS (opsional)
++
++```json
++"ssl": {
++  "enabled": true,
++  "cert": "/etc/letsencrypt/live/NODE_FQDN/fullchain.pem",
++  "key": "/etc/letsencrypt/live/NODE_FQDN/privkey.pem"
++}
++```
++
+ ## Setup Development
+ 
+ Butuh Go 1.22+.
+@@ -74,10 +82,11 @@ go test ./...
+ 
+ - [x] Skeleton project + routing + auth middleware
+ - [x] Interface `Environment` + stub
+-- [ ] `DockerEnvironment` — integrasi Docker SDK asli (butuh VPS)
+-- [ ] SFTP server (butuh VPS)
+-- [ ] WebSocket console real-time (butuh VPS)
+-- [ ] Resource usage reporting ke Panel (butuh VPS)
++- [x] `DockerEnvironment` asli
++- [x] Resource usage reporting ke Panel
++- [x] WebSocket console real-time
++- [x] File manager API + SFTP server
++- [x] TLS opsional + `/api/system` (v0.2.0)
+ 
+ ## License
+ 
+diff --git a/cmd/wings/main.go b/cmd/wings/main.go
+index 4cfa4e4..91fc1ca 100644
+--- a/cmd/wings/main.go
++++ b/cmd/wings/main.go
+@@ -9,6 +9,7 @@ import (
+ 	"github.com/Julakk/DockWings/internal/config"
+ 	"github.com/Julakk/DockWings/internal/docker"
+ 	"github.com/Julakk/DockWings/internal/server"
++	"github.com/Julakk/DockWings/internal/version"
+ )
+ 
+ func main() {
+@@ -28,9 +29,19 @@ func main() {
+ 
+ 	router := api.NewRouter(mgr, env, cfg.AuthToken, api.WithFilesRoot(cfg.DataDirectory))
+ 
+-	log.Printf("DockWings jalan di %s (Docker environment)", cfg.ListenAddr)
++	scheme := "http"
++	if cfg.SSL.Enabled {
++		scheme = "https"
++	}
++	log.Printf("DockWings v%s jalan di %s://%s (Docker environment)", version.Version, scheme, cfg.ListenAddr)
+ 
+-	if err := http.ListenAndServe(cfg.ListenAddr, router); err != nil {
+-		log.Fatalf("server berhenti: %v", err)
++	var serveErr error
++	if cfg.SSL.Enabled {
++		serveErr = http.ListenAndServeTLS(cfg.ListenAddr, cfg.SSL.Cert, cfg.SSL.Key, router)
++	} else {
++		serveErr = http.ListenAndServe(cfg.ListenAddr, router)
++	}
++	if serveErr != nil {
++		log.Fatalf("server berhenti: %v", serveErr)
+ 	}
+ }
+diff --git a/config.example.json b/config.example.json
+index dec5ddd..9192f9e 100644
+--- a/config.example.json
++++ b/config.example.json
+@@ -3,5 +3,10 @@
+   "sftp_addr": ":2022",
+   "auth_token": "GANTI_DENGAN_DAEMON_TOKEN_DARI_PANEL",
+   "docker_socket": "/var/run/docker.sock",
+-  "data_directory": "/var/lib/dockwings/servers"
++  "data_directory": "/var/lib/dockwings/servers",
++  "ssl": {
++    "enabled": false,
++    "cert": "/etc/letsencrypt/live/NODE_FQDN/fullchain.pem",
++    "key": "/etc/letsencrypt/live/NODE_FQDN/privkey.pem"
++  }
+ }
+diff --git a/internal/api/router.go b/internal/api/router.go
+index dd9fd38..3a97ad9 100644
+--- a/internal/api/router.go
++++ b/internal/api/router.go
+@@ -2,10 +2,12 @@ package api
+ 
+ import (
+ 	"net/http"
++	"runtime"
+ 
+ 	"github.com/Julakk/DockWings/internal/api/middleware"
+ 	"github.com/Julakk/DockWings/internal/docker"
+ 	"github.com/Julakk/DockWings/internal/server"
++	"github.com/Julakk/DockWings/internal/version"
+ )
+ 
+ type routerConfig struct {
+@@ -38,6 +40,18 @@ func NewRouter(mgr *server.Manager, env docker.Environment, authToken string, op
+ 	protected.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+ 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+ 	})
++	// GET /api/system — info daemon, mirip endpoint /api/system di Wings Pterodactyl.
++	// Dipakai Panel buat nampilin versi Wings + cek node online.
++	protected.HandleFunc("GET /api/system", func(w http.ResponseWriter, r *http.Request) {
++		writeJSON(w, http.StatusOK, map[string]any{
++			"version":        version.Version,
++			"kernel_version": "",
++			"architecture":   runtime.GOARCH,
++			"os":             runtime.GOOS,
++			"cpu_count":      runtime.NumCPU(),
++			"servers":        len(mgr.All()),
++		})
++	})
+ 	protected.HandleFunc("POST /api/servers", h.CreateServer)
+ 	protected.HandleFunc("POST /api/servers/{uuid}/power", h.Power)
+ 	protected.HandleFunc("POST /api/servers/{uuid}/commands", h.SendCommand)
+diff --git a/internal/api/router_system_test.go b/internal/api/router_system_test.go
+new file mode 100644
+index 0000000..62c9f94
+--- /dev/null
++++ b/internal/api/router_system_test.go
+@@ -0,0 +1,39 @@
++package api
++
++import (
++	"encoding/json"
++	"net/http"
++	"net/http/httptest"
++	"testing"
++
++	"github.com/Julakk/DockWings/internal/docker"
++	"github.com/Julakk/DockWings/internal/server"
++	"github.com/Julakk/DockWings/internal/version"
++)
++
++func TestSystemEndpoint(t *testing.T) {
++	r := NewRouter(server.NewManager(), docker.NewStubEnvironment(), "tok")
++
++	req := httptest.NewRequest("GET", "/api/system", nil)
++	req.Header.Set("Authorization", "Bearer tok")
++	rec := httptest.NewRecorder()
++	r.ServeHTTP(rec, req)
++
++	if rec.Code != http.StatusOK {
++		t.Fatalf("status = %d, mau 200", rec.Code)
++	}
++	var body map[string]any
++	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
++		t.Fatal(err)
++	}
++	if body["version"] != version.Version {
++		t.Errorf("version = %v, mau %s", body["version"], version.Version)
++	}
++
++	req = httptest.NewRequest("GET", "/api/system", nil)
++	rec = httptest.NewRecorder()
++	r.ServeHTTP(rec, req)
++	if rec.Code != http.StatusUnauthorized {
++		t.Errorf("tanpa token harusnya 401, dapat %d", rec.Code)
++	}
++}
+diff --git a/internal/config/config.go b/internal/config/config.go
+index 115f44c..89e5c25 100644
+--- a/internal/config/config.go
++++ b/internal/config/config.go
+@@ -24,6 +24,18 @@ type Config struct {
+ 
+ 	// DataDirectory — folder tempat nyimpen file server-server game
+ 	DataDirectory string `json:"data_directory"`
++
++	// SSL — TLS opsional buat HTTP API, mirip blok `api.ssl` di Wings Pterodactyl.
++	// Kalau Enabled=true, Node di Panel harus pakai scheme https.
++	// Kalau false (default), Node di Panel harus pakai scheme http.
++	SSL SSLConfig `json:"ssl"`
++}
++
++// SSLConfig — setting TLS buat HTTP API Wings.
++type SSLConfig struct {
++	Enabled bool   `json:"enabled"`
++	Cert    string `json:"cert"` // path fullchain.pem
++	Key     string `json:"key"`  // path privkey.pem
+ }
+ 
+ // Default nilai konfigurasi kalau file config belum ada.
+@@ -57,5 +69,9 @@ func Load(path string) (Config, error) {
+ 		return cfg, fmt.Errorf("auth_token wajib diisi di config.json, dapetin dari Panel pas bikin Node")
+ 	}
+ 
++	if cfg.SSL.Enabled && (cfg.SSL.Cert == "" || cfg.SSL.Key == "") {
++		return cfg, fmt.Errorf("ssl.enabled=true tapi ssl.cert / ssl.key belum diisi")
++	}
++
+ 	return cfg, nil
+ }
+diff --git a/internal/version/version.go b/internal/version/version.go
+new file mode 100644
+index 0000000..67f60ff
+--- /dev/null
++++ b/internal/version/version.go
+@@ -0,0 +1,6 @@
++// Package version nyimpen versi daemon DockWings di satu tempat.
++// Bisa di-override pas build: go build -ldflags "-X github.com/Julakk/DockWings/internal/version.Version=0.2.0"
++package version
++
++// Version — versi rilis DockWings saat ini.
++var Version = "0.2.0"

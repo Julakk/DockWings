@@ -9,6 +9,7 @@ import (
 	"github.com/Julakk/DockWings/internal/config"
 	"github.com/Julakk/DockWings/internal/docker"
 	"github.com/Julakk/DockWings/internal/server"
+	"github.com/Julakk/DockWings/internal/version"
 )
 
 func main() {
@@ -28,9 +29,19 @@ func main() {
 
 	router := api.NewRouter(mgr, env, cfg.AuthToken, api.WithFilesRoot(cfg.DataDirectory))
 
-	log.Printf("DockWings jalan di %s (Docker environment)", cfg.ListenAddr)
+	scheme := "http"
+	if cfg.SSL.Enabled {
+		scheme = "https"
+	}
+	log.Printf("DockWings v%s jalan di %s://%s (Docker environment)", version.Version, scheme, cfg.ListenAddr)
 
-	if err := http.ListenAndServe(cfg.ListenAddr, router); err != nil {
-		log.Fatalf("server berhenti: %v", err)
+	var serveErr error
+	if cfg.SSL.Enabled {
+		serveErr = http.ListenAndServeTLS(cfg.ListenAddr, cfg.SSL.Cert, cfg.SSL.Key, router)
+	} else {
+		serveErr = http.ListenAndServe(cfg.ListenAddr, router)
+	}
+	if serveErr != nil {
+		log.Fatalf("server berhenti: %v", serveErr)
 	}
 }

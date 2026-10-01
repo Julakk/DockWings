@@ -3,5 +3,10 @@
   "sftp_addr": ":2022",
   "auth_token": "GANTI_DENGAN_DAEMON_TOKEN_DARI_PANEL",
   "docker_socket": "/var/run/docker.sock",
-  "data_directory": "/var/lib/dockwings/servers"
+  "data_directory": "/var/lib/dockwings/servers",
+  "ssl": {
+    "enabled": false,
+    "cert": "/etc/letsencrypt/live/NODE_FQDN/fullchain.pem",
+    "key": "/etc/letsencrypt/live/NODE_FQDN/privkey.pem"
+  }
 }

@@ -6,22 +6,20 @@ Dikembangkan oleh **Julak Junior** ([@Julakk](https://github.com/Julakk)). Repo 
 
 ---
 
-## Status: Skeleton Awal ⚠️
+## Status: v0.2.0
 
-Repo ini baru berisi **struktur dasar & interface**, belum ada implementasi Docker beneran. Alasannya: development DockPanel sepenuhnya dari HP via Termux, dan **Docker nggak bisa jalan di Termux/Android**. Jadi bagian ini nunggu VPS tersedia buat development & testing lanjutan.
+Daemon udah punya kontrol Docker asli (`DockerEnvironment`), resource usage (CPU/RAM/disk), console WebSocket real-time, file manager API, dan dukungan port allocation. Mulai v0.2.0 ada TLS opsional dan endpoint `/api/system` buat versi daemon.
 
-Yang udah ada sekarang:
-- ✅ Struktur project & routing HTTP API
-- ✅ Interface `Environment` (abstraksi kontrol container) + implementasi stub (cuma logging)
-- ✅ Auth middleware (validasi token dari Panel)
-- ✅ Endpoint API yang cocok sama `WingsService.php` di Panel
-- ✅ CI (build + vet + test) via GitHub Actions
+Catatan: Docker nggak bisa jalan di Termux/Android, jadi daemon ini harus dijalanin dan dites di VPS Linux.
 
-Yang belum:
-- ❌ Implementasi Docker asli (`DockerEnvironment`) — butuh Docker SDK + VPS buat testing
-- ❌ SFTP server
-- ❌ WebSocket console real-time
-- ❌ Resource usage reporting (CPU/RAM/disk) balik ke Panel
+### Scheme Node di Panel harus cocok sama config Wings
+
+| `ssl.enabled` di Wings | Scheme Node di Panel |
+| ---------------------- | -------------------- |
+| `false` (default)      | `http`               |
+| `true`                 | `https`              |
+
+Kalau nggak cocok, Panel nampilin `cURL error 35 ... wrong version number`.
 
 ## Arsitektur
 
@@ -46,6 +44,16 @@ Semua endpoint butuh header `Authorization: Bearer {auth_token}` (token yang sam
 | POST | `/api/servers/{uuid}/power` | Start/stop/restart/kill |
 | POST | `/api/servers/{uuid}/commands` | Kirim command ke console |
 | DELETE | `/api/servers/{uuid}` | Hapus server |
+
+## Konfigurasi TLS (opsional)
+
+```json
+"ssl": {
+  "enabled": true,
+  "cert": "/etc/letsencrypt/live/NODE_FQDN/fullchain.pem",
+  "key": "/etc/letsencrypt/live/NODE_FQDN/privkey.pem"
+}
+```
 
 ## Setup Development
 
@@ -74,10 +82,11 @@ go test ./...
 
 - [x] Skeleton project + routing + auth middleware
 - [x] Interface `Environment` + stub
-- [ ] `DockerEnvironment` — integrasi Docker SDK asli (butuh VPS)
-- [ ] SFTP server (butuh VPS)
-- [ ] WebSocket console real-time (butuh VPS)
-- [ ] Resource usage reporting ke Panel (butuh VPS)
+- [x] `DockerEnvironment` asli
+- [x] Resource usage reporting ke Panel
+- [x] WebSocket console real-time
+- [x] File manager API + SFTP server
+- [x] TLS opsional + `/api/system` (v0.2.0)
 
 ## License
 

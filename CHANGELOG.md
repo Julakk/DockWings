@@ -2,6 +2,19 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.2.0] - 2026-10-02
+
+> "Sekarang bisa HTTPS beneran, dan Panel bisa nanya versi daemon." 🐧
+
+### Added
+- Dukungan TLS opsional lewat blok `ssl` di `config.json` (`enabled`, `cert`, `key`), mirip `api.ssl` di Wings Pterodactyl. Kalau `enabled: true`, scheme Node di Panel harus `https`; kalau `false` (default), scheme Node harus `http`.
+- Endpoint `GET /api/system` (butuh Bearer token): versi daemon, OS, arsitektur, jumlah CPU, dan jumlah server. Dipakai Panel v0.9.0+ buat nampilin versi dan status node.
+- Versi daemon dipusatin di `internal/version` dan muncul di log pas startup. Bisa di-override pas build lewat `-ldflags`.
+- Test buat `/api/system` (respon 200 dengan token, 401 tanpa token).
+
+### Fixed
+- Validasi config: `ssl.enabled` tanpa `cert`/`key` sekarang ditolak saat startup dengan pesan jelas.
+
 ## [0.1.0] - 2026-07-12
 
 > "Belum bisa kontrol Docker beneran, tapi kerangkanya udah berdiri." 🐧
