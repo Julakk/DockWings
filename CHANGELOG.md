@@ -2,6 +2,13 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.2.1] - 2026-10-03
+
+> "Rilis kecil biar versi Wings sejalan sama Panel v0.10.0." 🐧
+
+### Changed
+- Versi daemon jadi 0.2.1. Nggak ada perubahan perilaku; kompatibel penuh dengan Panel v0.9.0 dan v0.10.0.
+
 ## [0.2.0] - 2026-10-02
 
 > "Sekarang bisa HTTPS beneran, dan Panel bisa nanya versi daemon." 🐧
