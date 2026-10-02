@@ -2,6 +2,23 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.3.0] - 2026-10-03
+> "Akhirnya kontrol Docker beneran, bukan stub lagi." 🐧
+
+### Added
+
+- `DockerEnvironment` asli di `internal/docker/docker_env.go`, mengontrol container lewat Docker CLI (exec), menggantikan `StubEnvironment` sebagai implementasi utama.
+- Daemon sekarang bisa menjalankan aksi start/stop/restart/kill dan kirim command ke container server game.
+
+### Changed
+
+- Versi daemon jadi 0.3.0.
+
+### Catatan
+
+- Perlu Docker terpasang di node dan akses ke Docker socket.
+- Belum ada: SFTP, WebSocket console real-time, dan resource usage reporting ke Panel.
+
 ## [0.2.1] - 2026-10-03
 
 > "Rilis kecil biar versi Wings sejalan sama Panel v0.10.0." 🐧
@@ -46,7 +63,7 @@ Semua perubahan penting di project ini dicatat di sini.
 - Repo ini terpisah dari [DockPanel](https://github.com/Julakk/DockPanel), sesuai pola Panel/Wings di Pterodactyl asli
 
 ## Roadmap Selanjutnya
-- [ ] `DockerEnvironment` — integrasi Docker SDK asli (butuh VPS)
+- [x] `DockerEnvironment` — kontrol Docker lewat CLI (exec)
 - [ ] SFTP server (butuh VPS)
 - [ ] WebSocket console real-time (butuh VPS)
 - [ ] Resource usage reporting (CPU/RAM/Disk) balik ke Panel (butuh VPS)
