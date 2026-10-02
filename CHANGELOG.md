@@ -7,17 +7,23 @@ Semua perubahan penting di project ini dicatat di sini.
 
 ### Added
 
-- `DockerEnvironment` asli di `internal/docker/docker_env.go`, mengontrol container lewat Docker CLI (exec), menggantikan `StubEnvironment` sebagai implementasi utama.
-- Daemon sekarang bisa menjalankan aksi start/stop/restart/kill dan kirim command ke container server game.
+- `DockerEnvironment` asli di `internal/docker/docker_env.go`, mengontrol container lewat Docker CLI (exec), menggantikan `StubEnvironment` sebagai implementasi utama. Aksi start/stop/restart/kill dan kirim command ke container server game sekarang jalan beneran.
+- WebSocket console real-time: streaming log container dan kirim command dari satu koneksi.
+- Endpoint `GET /api/servers/{uuid}/resources` buat resource bar Panel: CPU, memory (lewat `docker stats`), dan disk (lewat `du`).
+- Port allocation: port server dipetakan ke container lewat `-p`, dan `SERVER_IP`/`SERVER_PORT` di-inject sebagai environment variable.
+- File manager API: list, baca isi, tulis, mkdir, rename, dan hapus, dengan proteksi path traversal dan symlink (`internal/files`).
+- Integration test lifecycle `DockerEnvironment` dan job CI buat integration test Docker.
 
 ### Changed
 
+- Hardening container: validasi uuid dan image sebelum container dibuat.
 - Versi daemon jadi 0.3.0.
 
 ### Catatan
 
 - Perlu Docker terpasang di node dan akses ke Docker socket.
-- Belum ada: SFTP, WebSocket console real-time, dan resource usage reporting ke Panel.
+- File manager baru lewat HTTP API; server SFTP belum ada.
+- Test end-to-end Panel ↔ DockWings belum dikerjakan.
 
 ## [0.2.1] - 2026-10-03
 
@@ -65,7 +71,7 @@ Semua perubahan penting di project ini dicatat di sini.
 ## Roadmap Selanjutnya
 - [x] `DockerEnvironment` — kontrol Docker lewat CLI (exec)
 - [ ] SFTP server (butuh VPS)
-- [ ] WebSocket console real-time (butuh VPS)
-- [ ] Resource usage reporting (CPU/RAM/Disk) balik ke Panel (butuh VPS)
+- [x] WebSocket console real-time
+- [x] Resource usage reporting (CPU/RAM/Disk) ke Panel
 - [ ] Testing end-to-end `WingsService` (Panel) ↔ DockWings (butuh VPS)
 - Tambah job CI integration test
