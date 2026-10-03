@@ -2,6 +2,23 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.4.0] - 2026-10-03
+> "Server nyala lagi sendiri setelah VPS reboot." 🐧
+
+### Added
+
+- Restart policy `unless-stopped` dipasang ke container tiap kali server di-Start (`docker update --restart=unless-stopped`). Server yang lagi jalan nyala lagi otomatis setelah reboot host atau restart Docker; server yang dihentikan lewat Stop atau Kill tetap mati.
+
+### Changed
+
+- Versi daemon jadi 0.4.0.
+
+### Catatan
+
+- Container yang sudah ada perlu `docker update --restart=unless-stopped <nama>` sekali; container baru dapat policy saat pertama kali di-Start.
+- Server yang belum pernah di-Start sengaja nggak dapat policy, biar nggak jalan sendiri setelah reboot.
+- Server yang crash juga dinyalakan lagi oleh Docker (dengan jeda bertahap); status di Panel belum tentu ikut sinkron.
+
 ## [0.3.0] - 2026-10-03
 > "Akhirnya kontrol Docker beneran, bukan stub lagi." 🐧
 

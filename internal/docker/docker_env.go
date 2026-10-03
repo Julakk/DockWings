@@ -116,6 +116,9 @@ func (e *DockerEnvironment) Create(_ context.Context, s *server.Server) error {
 }
 
 func (e *DockerEnvironment) Start(ctx context.Context, s *server.Server) error {
+	// Pernah dinyalakan = nyala lagi otomatis setelah reboot host, kecuali di-Stop/Kill manual.
+	// Dipasang di sini (bukan di Create) biar server yang belum pernah di-Start nggak ikut jalan sendiri.
+	_, _ = run(ctx, "update", "--restart=unless-stopped", s.ContainerName())
 	if _, err := run(ctx, "start", s.ContainerName()); err != nil {
 		s.Status = server.StatusOffline
 		return err
