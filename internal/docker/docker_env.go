@@ -31,6 +31,11 @@ func run(ctx context.Context, args ...string) (string, error) {
 }
 
 func (e *DockerEnvironment) Create(_ context.Context, s *server.Server) error {
+	return e.create(s, true)
+}
+
+// create bikin container. pull=false dipakai Reconfigure (image sudah ada lokal).
+func (e *DockerEnvironment) create(s *server.Server, pull bool) error {
 	// Context sendiri, biar pull image tetap jalan walau Panel udah timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
@@ -46,9 +51,11 @@ func (e *DockerEnvironment) Create(_ context.Context, s *server.Server) error {
 		return err
 	}
 
-	if _, err := run(ctx, "pull", s.Image); err != nil {
-		s.Status = "error"
-		return err
+	if pull {
+		if _, err := run(ctx, "pull", s.Image); err != nil {
+			s.Status = "error"
+			return err
+		}
 	}
 
 	// Hapus container lama dengan nama sama (kalau re-provision).

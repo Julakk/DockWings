@@ -2,6 +2,26 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.4.1] - 2026-10-04
+> "Port bisa diganti tanpa provision ulang, dan backup server akhirnya jalan." 🐧
+
+### Added
+
+- `PUT /api/servers/{uuid}/allocations`: simpan daftar allocation baru dari Panel lalu bikin ulang container supaya port mapping dan `SERVER_IP`/`SERVER_PORT` ikut berubah. Server yang lagi jalan direstart sebentar; folder data tetap utuh. Container lama dicadangkan sementara dan dikembalikan kalau pembuatan ulang gagal.
+- Backup server: `POST /api/servers/{uuid}/backups` (jalan di background, balas 202), `GET /api/servers/{uuid}/backups/{backup}` (status `creating`/`completed`/`failed`, ukuran, checksum SHA-256), `GET .../download`, dan `DELETE`. Arsip `tar.gz` dari folder data, disimpan di `backup_directory`. Symlink dan file spesial dilewati.
+- Setelan `backup_directory` di `config.json` (default `/var/lib/dockwings/backups`, nggak wajib diisi).
+
+### Changed
+
+- Versi daemon jadi 0.4.1.
+
+### Catatan
+
+- Restore backup belum ada. Arsip bisa di-download dan dibuka manual.
+- Backup server yang lagi jalan nggak dijamin konsisten (file bisa berubah selama dibaca).
+- Backup yang sedang dibuat saat daemon restart ditandai `failed`.
+- Perubahan port butuh Panel v0.15.3+ supaya tombol Make Primary dan Hapus allocation ikut menerapkannya.
+
 ## [0.4.0] - 2026-10-03
 > "Server nyala lagi sendiri setelah VPS reboot." 🐧
 

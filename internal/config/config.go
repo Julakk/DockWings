@@ -25,6 +25,9 @@ type Config struct {
 	// DataDirectory — folder tempat nyimpen file server-server game
 	DataDirectory string `json:"data_directory"`
 
+	// BackupDirectory — folder arsip backup server (tar.gz). Jangan di dalam DataDirectory.
+	BackupDirectory string `json:"backup_directory"`
+
 	// SSL — TLS opsional buat HTTP API, mirip blok `api.ssl` di Wings Pterodactyl.
 	// Kalau Enabled=true, Node di Panel harus pakai scheme https.
 	// Kalau false (default), Node di Panel harus pakai scheme http.
@@ -41,11 +44,12 @@ type SSLConfig struct {
 // Default nilai konfigurasi kalau file config belum ada.
 func Default() Config {
 	return Config{
-		ListenAddr:    ":8080",
-		SFTPAddr:      ":2022",
-		AuthToken:     "",
-		DockerSocket:  "/var/run/docker.sock",
-		DataDirectory: "/var/lib/dockwings/servers",
+		ListenAddr:      ":8080",
+		SFTPAddr:        ":2022",
+		AuthToken:       "",
+		DockerSocket:    "/var/run/docker.sock",
+		DataDirectory:   "/var/lib/dockwings/servers",
+		BackupDirectory: "/var/lib/dockwings/backups",
 	}
 }
 

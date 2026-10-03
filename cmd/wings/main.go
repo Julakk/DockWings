@@ -27,7 +27,7 @@ func main() {
 	// ke tahap integrasi Docker (butuh VPS buat testing).
 	env := docker.NewDockerEnvironment(cfg.DataDirectory)
 
-	router := api.NewRouter(mgr, env, cfg.AuthToken, api.WithFilesRoot(cfg.DataDirectory))
+	router := api.NewRouter(mgr, env, cfg.AuthToken, api.WithFilesRoot(cfg.DataDirectory), api.WithBackups(cfg.DataDirectory, cfg.BackupDirectory))
 
 	scheme := "http"
 	if cfg.SSL.Enabled {

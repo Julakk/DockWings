@@ -5,13 +5,15 @@ import (
 	"runtime"
 
 	"github.com/Julakk/DockWings/internal/api/middleware"
+	"github.com/Julakk/DockWings/internal/backup"
 	"github.com/Julakk/DockWings/internal/docker"
 	"github.com/Julakk/DockWings/internal/server"
 	"github.com/Julakk/DockWings/internal/version"
 )
 
 type routerConfig struct {
-	filesRoot string
+	filesRoot  string
+	backupRoot string
 }
 
 // RouterOption ngatur fitur opsional di NewRouter.
@@ -21,6 +23,12 @@ type RouterOption func(*routerConfig)
 // (folder induk yang isinya <uuid>/ per server).
 func WithFilesRoot(root string) RouterOption {
 	return func(c *routerConfig) { c.filesRoot = root }
+}
+
+// WithBackups ngaktifin endpoint backup. dataRoot = data_directory,
+// backupRoot = backup_directory (tempat arsip tar.gz disimpan).
+func WithBackups(dataRoot, backupRoot string) RouterOption {
+	return func(c *routerConfig) { c.filesRoot, c.backupRoot = dataRoot, backupRoot }
 }
 
 // NewRouter bikin http.Handler lengkap dengan semua route.
@@ -57,6 +65,15 @@ func NewRouter(mgr *server.Manager, env docker.Environment, authToken string, op
 	protected.HandleFunc("POST /api/servers/{uuid}/commands", h.SendCommand)
 	protected.HandleFunc("DELETE /api/servers/{uuid}", h.DeleteServer)
 	protected.HandleFunc("GET /api/servers/{uuid}/resources", h.Resources)
+	protected.HandleFunc("PUT /api/servers/{uuid}/allocations", h.UpdateAllocations)
+
+	if cfg.backupRoot != "" {
+		bh := &BackupHandlers{Manager: mgr, Store: backup.New(cfg.filesRoot, cfg.backupRoot)}
+		protected.HandleFunc("POST /api/servers/{uuid}/backups", bh.Create)
+		protected.HandleFunc("GET /api/servers/{uuid}/backups/{backup}", bh.Status)
+		protected.HandleFunc("GET /api/servers/{uuid}/backups/{backup}/download", bh.Download)
+		protected.HandleFunc("DELETE /api/servers/{uuid}/backups/{backup}", bh.Delete)
+	}
 
 	if cfg.filesRoot != "" {
 		fh := &FilesHandlers{Manager: mgr, Root: cfg.filesRoot}
