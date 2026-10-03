@@ -73,11 +73,21 @@ func TestDockerEnvironmentLifecycle(t *testing.T) {
 		t.Fatal("container jalan padahal baru Create")
 	}
 
+	// Container yang belum pernah di-Start nggak boleh punya restart policy.
+	if out, err := dockerOut("inspect", "-f", "{{.HostConfig.RestartPolicy.Name}}", name); err != nil || out != "no" {
+		t.Errorf("policy setelah Create = %q (err=%v), mau %q", out, err, "no")
+	}
+
 	// Start
 	if err := env.Start(ctx, s); err != nil {
 		t.Fatalf("Start: %v", err)
 	}
 	waitFor(t, "container running", 10*time.Second, func() bool { return isRunning(name) })
+
+	// Start harus masang restart policy biar server nyala lagi setelah reboot host.
+	if out, err := dockerOut("inspect", "-f", "{{.HostConfig.RestartPolicy.Name}}", name); err != nil || out != "unless-stopped" {
+		t.Errorf("policy setelah Start = %q (err=%v), mau %q", out, err, "unless-stopped")
+	}
 
 	// Env variable masuk ke container
 	if out, err := dockerOut("exec", name, "printenv", "FOO"); err != nil || out != "bar" {
