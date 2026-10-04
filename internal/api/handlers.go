@@ -12,6 +12,9 @@ import (
 type Handlers struct {
 	Manager *server.Manager
 	Env     docker.Environment
+
+	// Restoring (opsional) dipakai buat nolak start server yang lagi di-restore.
+	Restoring func(uuid string) bool
 }
 
 func NewHandlers(mgr *server.Manager, env docker.Environment) *Handlers {
@@ -97,6 +100,11 @@ func (h *Handlers) Power(w http.ResponseWriter, r *http.Request) {
 	var req powerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "body request nggak valid: "+err.Error())
+		return
+	}
+
+	if (req.Action == "start" || req.Action == "restart") && h.Restoring != nil && h.Restoring(uuid) {
+		writeError(w, http.StatusConflict, "restore backup sedang berjalan, tunggu selesai")
 		return
 	}
 

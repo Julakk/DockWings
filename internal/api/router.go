@@ -68,11 +68,17 @@ func NewRouter(mgr *server.Manager, env docker.Environment, authToken string, op
 	protected.HandleFunc("PUT /api/servers/{uuid}/allocations", h.UpdateAllocations)
 
 	if cfg.backupRoot != "" {
-		bh := &BackupHandlers{Manager: mgr, Store: backup.New(cfg.filesRoot, cfg.backupRoot)}
+		store := backup.New(cfg.filesRoot, cfg.backupRoot)
+		restorer := backup.NewRestorer(store)
+		restorer.Recover()
+		h.Restoring = restorer.IsRestoring
+		bh := &BackupHandlers{Manager: mgr, Env: env, Store: store, Restorer: restorer}
 		protected.HandleFunc("POST /api/servers/{uuid}/backups", bh.Create)
 		protected.HandleFunc("GET /api/servers/{uuid}/backups/{backup}", bh.Status)
 		protected.HandleFunc("GET /api/servers/{uuid}/backups/{backup}/download", bh.Download)
 		protected.HandleFunc("DELETE /api/servers/{uuid}/backups/{backup}", bh.Delete)
+		protected.HandleFunc("POST /api/servers/{uuid}/backups/{backup}/restore", bh.Restore)
+		protected.HandleFunc("GET /api/servers/{uuid}/restore", bh.RestoreStatus)
 	}
 
 	if cfg.filesRoot != "" {

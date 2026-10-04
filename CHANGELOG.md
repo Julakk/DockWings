@@ -2,6 +2,25 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.4.2] - 2026-10-04
+> "Restore backup: aman, diverifikasi, dan nggak merusak data lama kalau gagal." 🐧
+
+### Added
+
+- `POST /api/servers/{uuid}/backups/{backup}/restore`: ganti seluruh isi folder data server dengan isi backup (jalan di background, balas 202). Server harus mati, kalau nggak balas 409. Arsip diverifikasi checksum SHA-256 dulu, diekstrak ke folder sementara, baru ditukar dengan folder asli. Kalau ada yang gagal, folder asli nggak disentuh. Entri arsip dengan path berbahaya (`..`, absolut) ditolak; symlink dan file spesial dilewati.
+- `GET /api/servers/{uuid}/restore`: status restore terakhir (`idle`, `restoring`, `completed`, `failed`).
+- Start dan restart ditolak (409) selama restore berjalan.
+- Pas daemon start, sisa restore yang terputus dibereskan: folder asli dikembalikan kalau daemon sempat mati di tengah penukaran.
+
+### Changed
+
+- Versi daemon jadi 0.4.2.
+
+### Catatan
+
+- Restore butuh ruang disk sekitar dua kali ukuran data server selama proses (folder baru dan folder lama ada bersamaan).
+- Restore mengganti SEMUA file server; file yang dibuat setelah backup ikut hilang.
+
 ## [0.4.1] - 2026-10-04
 > "Port bisa diganti tanpa provision ulang, dan backup server akhirnya jalan." 🐧
 

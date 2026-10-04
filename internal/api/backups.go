@@ -7,13 +7,16 @@ import (
 	"os"
 
 	"github.com/Julakk/DockWings/internal/backup"
+	"github.com/Julakk/DockWings/internal/docker"
 	"github.com/Julakk/DockWings/internal/server"
 )
 
 // BackupHandlers nangani endpoint backup server.
 type BackupHandlers struct {
-	Manager *server.Manager
-	Store   *backup.Store
+	Manager  *server.Manager
+	Env      docker.Environment
+	Store    *backup.Store
+	Restorer *backup.Restorer
 }
 
 func (b *BackupHandlers) serverUUID(w http.ResponseWriter, r *http.Request) (string, bool) {
@@ -35,7 +38,7 @@ func writeBackupError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, backup.ErrNotFound):
 		writeError(w, http.StatusNotFound, err.Error())
-	case errors.Is(err, backup.ErrBusy):
+	case errors.Is(err, backup.ErrBusy), errors.Is(err, backup.ErrRestoring):
 		writeError(w, http.StatusConflict, err.Error())
 	case errors.Is(err, backup.ErrNoData):
 		writeError(w, http.StatusUnprocessableEntity, err.Error())
