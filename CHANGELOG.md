@@ -2,6 +2,17 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.4.4] - 2026-10-05
+> "Script install egg yang chown folder script nggak lagi error." 🐧
+
+### Fixed
+
+- Folder script install (`/mnt/install`) sekarang bisa ditulis, nggak read-only lagi. Script egg Pterodactyl sering menjalankan `chown` di folder itu dan sebelumnya kena `Read-only file system`. Folder-nya sementara dan dihapus setelah install.
+
+### Changed
+
+- Versi daemon jadi 0.4.4.
+
 ## [0.4.3] - 2026-10-05
 > "Reinstall server dari Panel akhirnya jalan: script install egg dieksekusi di container sementara." 🐧
 

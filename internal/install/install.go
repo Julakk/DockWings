@@ -199,7 +199,8 @@ func (t *tailBuffer) Write(p []byte) (int, error) {
 }
 
 // DockerRunner jalanin script di container sementara: folder data server
-// di-mount ke /mnt/server, script ke /mnt/install/install.sh (read-only).
+// di-mount ke /mnt/server, script ke /mnt/install/install.sh
+// (bisa ditulis, karena script egg Pterodactyl sering chown folder ini; foldernya sementara).
 func DockerRunner(dataRoot string) Runner {
 	return func(ctx context.Context, job Job) (string, error) {
 		tmp, err := os.MkdirTemp(dataRoot, tmpPrefix)
@@ -238,7 +239,7 @@ func DockerRunner(dataRoot string) Runner {
 		args := []string{
 			"run", "--rm", "--name", job.Name,
 			"-v", dataDir + ":/mnt/server",
-			"-v", scriptDir + ":/mnt/install:ro",
+			"-v", scriptDir + ":/mnt/install",
 			"-w", "/mnt/server",
 			"--security-opt=no-new-privileges",
 			"--pids-limit=512",
