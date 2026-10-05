@@ -19,6 +19,10 @@ func (b *BackupHandlers) Restore(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, err.Error())
 		return
 	}
+	if b.Installing != nil && b.Installing(uuid) {
+		writeError(w, http.StatusConflict, "install sedang berjalan, tunggu selesai")
+		return
+	}
 	if res, err := b.Env.Resources(r.Context(), s); err == nil &&
 		(res.State == "running" || res.State == "starting") {
 		writeError(w, http.StatusConflict, "matikan server dulu sebelum restore backup")

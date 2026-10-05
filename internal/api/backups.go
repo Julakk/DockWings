@@ -17,6 +17,9 @@ type BackupHandlers struct {
 	Env      docker.Environment
 	Store    *backup.Store
 	Restorer *backup.Restorer
+
+	// Installing (opsional) dipakai buat nolak restore selama install berjalan.
+	Installing func(uuid string) bool
 }
 
 func (b *BackupHandlers) serverUUID(w http.ResponseWriter, r *http.Request) (string, bool) {

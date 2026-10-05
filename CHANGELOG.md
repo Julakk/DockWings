@@ -2,6 +2,25 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.4.3] - 2026-10-05
+> "Reinstall server dari Panel akhirnya jalan: script install egg dieksekusi di container sementara." 🐧
+
+### Added
+
+- `POST /api/servers/{uuid}/install`: jalanin script install egg di container sementara (jalan di background, balas 202). Folder data server di-mount ke `/mnt/server`, script ke `/mnt/install/install.sh` (read-only), env variable server ikut diteruskan. Pakai `bash` kalau image-nya punya, kalau nggak `sh`. Server harus mati, kalau nggak balas 409. Batas waktu 30 menit.
+- `GET /api/servers/{uuid}/install`: status install terakhir (`idle`, `running`, `completed`, `failed`) plus `error` dan ekor `log` kalau ada.
+- Start, restart, hapus server, dan restore backup ditolak (409) selama install berjalan. Install juga ditolak selama restore berjalan.
+- Pas daemon start, folder sementara sisa install yang terputus dibersihkan.
+
+### Changed
+
+- Versi daemon jadi 0.4.3.
+
+### Catatan
+
+- Script install bisa menimpa file server; Panel sudah minta konfirmasi sebelum manggil endpoint ini.
+- Setelah daemon restart, status install balik ke `idle` (disimpan di memori). Panel menganggapnya gagal dan bisa di-set manual.
+
 ## [0.4.2] - 2026-10-04
 > "Restore backup: aman, diverifikasi, dan nggak merusak data lama kalau gagal." 🐧
 

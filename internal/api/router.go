@@ -7,6 +7,7 @@ import (
 	"github.com/Julakk/DockWings/internal/api/middleware"
 	"github.com/Julakk/DockWings/internal/backup"
 	"github.com/Julakk/DockWings/internal/docker"
+	"github.com/Julakk/DockWings/internal/install"
 	"github.com/Julakk/DockWings/internal/server"
 	"github.com/Julakk/DockWings/internal/version"
 )
@@ -14,6 +15,7 @@ import (
 type routerConfig struct {
 	filesRoot  string
 	backupRoot string
+	installRun install.Runner
 }
 
 // RouterOption ngatur fitur opsional di NewRouter.
@@ -29,6 +31,11 @@ func WithFilesRoot(root string) RouterOption {
 // backupRoot = backup_directory (tempat arsip tar.gz disimpan).
 func WithBackups(dataRoot, backupRoot string) RouterOption {
 	return func(c *routerConfig) { c.filesRoot, c.backupRoot = dataRoot, backupRoot }
+}
+
+// WithInstallRunner ganti cara script install dijalanin (default: Docker). Dipakai test.
+func WithInstallRunner(run install.Runner) RouterOption {
+	return func(c *routerConfig) { c.installRun = run }
 }
 
 // NewRouter bikin http.Handler lengkap dengan semua route.
@@ -67,12 +74,31 @@ func NewRouter(mgr *server.Manager, env docker.Environment, authToken string, op
 	protected.HandleFunc("GET /api/servers/{uuid}/resources", h.Resources)
 	protected.HandleFunc("PUT /api/servers/{uuid}/allocations", h.UpdateAllocations)
 
+	if cfg.filesRoot != "" {
+		var inst *install.Installer
+		if cfg.installRun != nil {
+			inst = install.NewWithRunner(cfg.filesRoot, cfg.installRun)
+		} else {
+			inst = install.New(cfg.filesRoot)
+		}
+		inst.Recover()
+		h.Installing = inst.IsInstalling
+		ih := &InstallHandlers{
+			Manager:   mgr,
+			Env:       env,
+			Installer: inst,
+			Restoring: func(uuid string) bool { return h.Restoring != nil && h.Restoring(uuid) },
+		}
+		protected.HandleFunc("POST /api/servers/{uuid}/install", ih.Start)
+		protected.HandleFunc("GET /api/servers/{uuid}/install", ih.Status)
+	}
+
 	if cfg.backupRoot != "" {
 		store := backup.New(cfg.filesRoot, cfg.backupRoot)
 		restorer := backup.NewRestorer(store)
 		restorer.Recover()
 		h.Restoring = restorer.IsRestoring
-		bh := &BackupHandlers{Manager: mgr, Env: env, Store: store, Restorer: restorer}
+		bh := &BackupHandlers{Manager: mgr, Env: env, Store: store, Restorer: restorer, Installing: h.Installing}
 		protected.HandleFunc("POST /api/servers/{uuid}/backups", bh.Create)
 		protected.HandleFunc("GET /api/servers/{uuid}/backups/{backup}", bh.Status)
 		protected.HandleFunc("GET /api/servers/{uuid}/backups/{backup}/download", bh.Download)

@@ -15,6 +15,9 @@ type Handlers struct {
 
 	// Restoring (opsional) dipakai buat nolak start server yang lagi di-restore.
 	Restoring func(uuid string) bool
+
+	// Installing (opsional) dipakai buat nolak start/hapus server yang lagi di-install.
+	Installing func(uuid string) bool
 }
 
 func NewHandlers(mgr *server.Manager, env docker.Environment) *Handlers {
@@ -108,6 +111,11 @@ func (h *Handlers) Power(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if (req.Action == "start" || req.Action == "restart") && h.Installing != nil && h.Installing(uuid) {
+		writeError(w, http.StatusConflict, "install sedang berjalan, tunggu selesai")
+		return
+	}
+
 	ctx := r.Context()
 	var actionErr error
 
@@ -175,6 +183,11 @@ func (h *Handlers) DeleteServer(w http.ResponseWriter, r *http.Request) {
 	s, err := h.Manager.Get(uuid)
 	if err != nil {
 		writeError(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	if h.Installing != nil && h.Installing(uuid) {
+		writeError(w, http.StatusConflict, "install sedang berjalan, tunggu selesai")
 		return
 	}
 
