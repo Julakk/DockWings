@@ -4,6 +4,7 @@ package install
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -28,6 +29,9 @@ const (
 	maxLogResponse = 4 << 10
 	defaultTimeout = 30 * time.Minute
 	tmpPrefix      = ".install-"
+	stateFile      = ".installstate.json"
+
+	interruptedMsg = "daemon sempat mati atau restart saat install berjalan; hasil install nggak pasti. Cek isi server, lalu Reinstall kalau perlu."
 
 	// Pakai bash kalau ada (image installer Debian), kalau nggak sh (Alpine/ash).
 	entrypoint = `if [ -x /bin/bash ]; then exec /bin/bash /mnt/install/install.sh; else exec /bin/sh /mnt/install/install.sh; fi`
@@ -64,9 +68,10 @@ type Runner func(ctx context.Context, job Job) (string, error)
 
 // State = status install terakhir satu server (disimpan di memori).
 type State struct {
-	Status string `json:"status"`
-	Error  string `json:"error,omitempty"`
-	Log    string `json:"log,omitempty"`
+	Status   string `json:"status"`
+	Error    string `json:"error,omitempty"`
+	Log      string `json:"log,omitempty"`
+	ExitCode *int   `json:"exit_code,omitempty"`
 }
 
 // Installer ngatur install yang jalan di background per server.
@@ -75,25 +80,97 @@ type Installer struct {
 	run      Runner
 	timeout  time.Duration
 
+	statePath string
+	kill      func(name string)
+
 	mu    sync.Mutex
 	state map[string]State
 }
 
 // New bikin Installer yang pakai Docker.
 func New(dataRoot string) *Installer {
-	return NewWithRunner(dataRoot, DockerRunner(dataRoot))
+	i := NewWithRunner(dataRoot, DockerRunner(dataRoot))
+	i.kill = func(name string) { _ = exec.Command("docker", "rm", "-f", name).Run() }
+	return i
 }
 
 // NewWithRunner sama kayak New tapi runner-nya bisa diganti (buat test).
 func NewWithRunner(dataRoot string, run Runner) *Installer {
-	return &Installer{dataRoot: dataRoot, run: run, timeout: defaultTimeout, state: map[string]State{}}
+	return &Installer{
+		dataRoot:  dataRoot,
+		run:       run,
+		timeout:   defaultTimeout,
+		state:     map[string]State{},
+		statePath: filepath.Join(dataRoot, stateFile),
+		kill:      func(string) {},
+	}
 }
 
-// Recover bersihin folder sementara sisa install yang terputus.
+// Recover bersihin folder sementara sisa install yang terputus, lalu muat status
+// install dari disk. Install yang masih "running" di file berarti daemon mati
+// di tengah jalan: ditandai failed dan container install-nya dimatikan.
 func (i *Installer) Recover() {
 	left, _ := filepath.Glob(filepath.Join(i.dataRoot, tmpPrefix+"*"))
 	for _, p := range left {
 		_ = os.RemoveAll(p)
+	}
+	i.loadState()
+}
+
+func (i *Installer) loadState() {
+	data, err := os.ReadFile(i.statePath)
+	if err != nil {
+		return
+	}
+	var loaded map[string]State
+	if err := json.Unmarshal(data, &loaded); err != nil {
+		log.Printf("status install rusak, diabaikan: %v", err)
+		return
+	}
+
+	var killNames []string
+	changed := false
+	i.mu.Lock()
+	for uuid, st := range loaded {
+		if !idRe.MatchString(uuid) {
+			continue
+		}
+		if st.Status == Running {
+			killNames = append(killNames, "dockpanel-install-"+uuid)
+			st = State{Status: Failed, Error: interruptedMsg, Log: st.Log}
+			changed = true
+		}
+		i.state[uuid] = st
+	}
+	if changed {
+		i.persistLocked()
+	}
+	i.mu.Unlock()
+
+	for _, name := range killNames {
+		i.kill(name)
+	}
+}
+
+// persistLocked nulis status install ke disk (atomik). Pemanggil harus megang i.mu.
+func (i *Installer) persistLocked() {
+	data, err := json.Marshal(i.state)
+	if err != nil {
+		log.Printf("gagal simpan status install: %v", err)
+		return
+	}
+	if err := os.MkdirAll(i.dataRoot, 0o755); err != nil {
+		log.Printf("gagal simpan status install: %v", err)
+		return
+	}
+	tmp := i.statePath + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o600); err != nil {
+		log.Printf("gagal simpan status install: %v", err)
+		return
+	}
+	if err := os.Rename(tmp, i.statePath); err != nil {
+		log.Printf("gagal simpan status install: %v", err)
+		_ = os.Remove(tmp)
 	}
 }
 
@@ -143,6 +220,7 @@ func (i *Installer) Start(uuid string, spec Spec) error {
 		return ErrBusy
 	}
 	i.state[uuid] = State{Status: Running}
+	i.persistLocked()
 	i.mu.Unlock()
 
 	job := Job{Name: "dockpanel-install-" + uuid, Image: spec.Image, DataDir: dir, Script: script, Env: spec.Env}
@@ -159,12 +237,14 @@ func (i *Installer) finish(uuid string, job Job) {
 		err = fmt.Errorf("install melebihi batas waktu %s", i.timeout)
 	}
 
-	st := State{Status: Completed, Log: i.clean(tailBytes(out, maxLogResponse))}
+	zero := 0
+	st := State{Status: Completed, Log: i.clean(tailBytes(out, maxLogResponse)), ExitCode: &zero}
 	if err != nil {
 		st = State{
-			Status: Failed,
-			Error:  i.clean(err.Error()),
-			Log:    i.clean(tailBytes(out, maxLogResponse)),
+			Status:   Failed,
+			Error:    i.clean(err.Error()),
+			Log:      i.clean(tailBytes(out, maxLogResponse)),
+			ExitCode: exitCode(err),
 		}
 		log.Printf("install server %s gagal: %v", uuid, err)
 	} else {
@@ -173,7 +253,19 @@ func (i *Installer) finish(uuid string, job Job) {
 
 	i.mu.Lock()
 	i.state[uuid] = st
+	i.persistLocked()
 	i.mu.Unlock()
+}
+
+// exitCode ambil exit code script dari error docker run (nil kalau gagalnya bukan
+// karena script, mis. pull image gagal atau timeout).
+func exitCode(err error) *int {
+	var ee *exec.ExitError
+	if errors.As(err, &ee) && ee.ExitCode() >= 0 {
+		c := ee.ExitCode()
+		return &c
+	}
+	return nil
 }
 
 // clean buang path host dari teks sebelum dikirim ke Panel.

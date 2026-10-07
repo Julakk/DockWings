@@ -3,8 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -175,5 +177,19 @@ func TestInstallCreatesDataDir(t *testing.T) {
 	}
 	if st, err := os.Stat(filepath.Join(data, "srv1")); err != nil || !st.IsDir() {
 		t.Error("folder data server harusnya dibuat")
+	}
+	waitInstall(t, r, "srv1", "completed")
+}
+
+func TestInstallExitCodeInStatus(t *testing.T) {
+	r := installRouter(t, docker.NewStubEnvironment(), func(context.Context, install.Job) (string, error) {
+		return "boom", fmt.Errorf("script install gagal: %w", exec.Command("sh", "-c", "exit 3").Run())
+	})
+	if rec := doCall(t, r, "POST", "/api/servers/srv1/install", `{"script":"exit 3","container":"alpine"}`); rec.Code != http.StatusAccepted {
+		t.Fatalf("dapat %d", rec.Code)
+	}
+	b := waitInstall(t, r, "srv1", "failed")
+	if code, ok := b["exit_code"].(float64); !ok || code != 3 {
+		t.Errorf("exit_code = %v, mau 3", b["exit_code"])
 	}
 }

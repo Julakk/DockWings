@@ -2,6 +2,19 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.4.5] - 2026-10-07
+> "Hasil install nggak hilang lagi pas daemon restart, dan Panel bisa lihat exit code script." 🐧
+
+### Added
+
+- Status install disimpan ke disk (`.installstate.json` di folder data, mode 600), jadi `GET /api/servers/{uuid}/install` tetap jawab `completed` atau `failed` beserta `log` setelah daemon restart. Sebelumnya balik ke `idle`.
+- Kalau daemon mati pas install masih berjalan, statusnya jadi `failed` dengan pesan yang jelas (bukan `idle`), dan container install yang yatim dimatikan pas daemon start.
+- Field `exit_code` di status install: exit code script (0 kalau sukses). Nggak ada kalau gagalnya bukan karena script (pull image gagal, timeout).
+
+### Changed
+
+- Versi daemon jadi 0.4.5.
+
 ## [0.4.4] - 2026-10-05
 > "Script install egg yang chown folder script nggak lagi error." 🐧
 
