@@ -2,6 +2,19 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.4.8] - 2026-10-08
+> "Kompres, atur izin, dan download file dari URL langsung di server." 🐧
+
+### Added
+
+- `POST /api/servers/{uuid}/files/compress`: bikin arsip `.zip` dari file/folder (symlink dilewati, nggak menimpa arsip yang sudah ada, batas 1 GiB dan 20.000 file).
+- `POST /api/servers/{uuid}/files/chmod`: jadikan file executable (0755) atau biasa (0644).
+- `POST /api/servers/{uuid}/files/pull`: download file dari URL http/https ke server (maks 100 MB, maks 5 redirect). Alamat loopback, privat, link-local, CGNAT, dan IP host sendiri ditolak saat koneksi dibuat, jadi aman dari SSRF dan DNS rebinding.
+
+### Changed
+
+- Versi daemon jadi 0.4.8.
+
 ## [0.4.7] - 2026-10-08
 > "Image buatan sendiri bisa dipakai, dan file hasil ekstrak langsung bisa dijalankan." 🐧
 
