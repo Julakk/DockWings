@@ -2,6 +2,19 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.4.6] - 2026-10-08
+> "Zip dari panel sekarang bisa diekstrak langsung." 🐧
+
+### Added
+
+- Endpoint `POST /api/servers/{uuid}/files/extract` buat ngeluarin isi arsip `.zip`, `.tar`, `.tar.gz`, dan `.tgz` ke folder yang sama dengan arsipnya.
+- Proteksi zip-slip (entry dengan `..` ditolak), batas total hasil ekstrak 1 GiB dan 20.000 file per arsip, symlink di dalam arsip dilewati, dan bit executable dipertahankan.
+- Format `.rar` ditolak dengan pesan yang jelas.
+
+### Changed
+
+- Versi daemon jadi 0.4.6.
+
 ## [0.4.5] - 2026-10-07
 > "Hasil install nggak hilang lagi pas daemon restart, dan Panel bisa lihat exit code script." 🐧
 

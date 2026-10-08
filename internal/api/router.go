@@ -115,6 +115,7 @@ func NewRouter(mgr *server.Manager, env docker.Environment, authToken string, op
 		protected.HandleFunc("POST /api/servers/{uuid}/files/mkdir", fh.Mkdir)
 		protected.HandleFunc("POST /api/servers/{uuid}/files/rename", fh.Rename)
 		protected.HandleFunc("POST /api/servers/{uuid}/files/delete", fh.Delete)
+		protected.HandleFunc("POST /api/servers/{uuid}/files/extract", fh.Extract)
 	}
 
 	mux := http.NewServeMux()
