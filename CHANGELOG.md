@@ -2,6 +2,21 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.4.7] - 2026-10-08
+> "Image buatan sendiri bisa dipakai, dan file hasil ekstrak langsung bisa dijalankan." 🐧
+
+### Added
+
+- Extract: file ELF dan script berawalan `#!` otomatis dapat bit executable. Zip dari Windows nggak bawa bit itu, jadi `samp03svr` hasil ekstrak langsung bisa jalan.
+
+### Fixed
+
+- Create container: kalau `docker pull` gagal tapi image sudah ada di host (image lokal yang nggak ada di registry), proses lanjut pakai image lokal, bukan error.
+
+### Changed
+
+- Versi daemon jadi 0.4.7.
+
 ## [0.4.6] - 2026-10-08
 > "Zip dari panel sekarang bisa diekstrak langsung." 🐧
 

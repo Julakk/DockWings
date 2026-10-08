@@ -6,7 +6,7 @@ Dikembangkan oleh **Julak Junior** ([@Julakk](https://github.com/Julakk)). Repo 
 
 ---
 
-## Status: v0.4.6
+## Status: v0.4.7
 
 Daemon udah punya kontrol Docker asli (`DockerEnvironment`), resource usage (CPU/RAM/disk), console WebSocket real-time, file manager API, dan dukungan port allocation. Mulai v0.2.0 ada TLS opsional dan endpoint `/api/system` buat versi daemon.
 

@@ -52,7 +52,7 @@ func (e *DockerEnvironment) create(s *server.Server, pull bool) error {
 	}
 
 	if pull {
-		if _, err := run(ctx, "pull", s.Image); err != nil {
+		if _, err := run(ctx, "pull", s.Image); err != nil && !imageLocal(ctx, s.Image) {
 			s.Status = "error"
 			return err
 		}

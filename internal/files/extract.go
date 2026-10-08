@@ -3,6 +3,8 @@ package files
 import (
 	"archive/tar"
 	"archive/zip"
+	"bufio"
+	"bytes"
 	"compress/gzip"
 	"errors"
 	"io"
@@ -80,7 +82,11 @@ func (e *extractor) file(clean string, mode os.FileMode, r io.Reader) error {
 		return err
 	}
 	remaining := MaxExtractBytes - e.bytes
-	n, err := io.Copy(out, io.LimitReader(r, remaining+1))
+	br := bufio.NewReader(r)
+	if head, _ := br.Peek(4); mode&0o111 == 0 && (bytes.HasPrefix(head, []byte("\x7fELF")) || bytes.HasPrefix(head, []byte("#!"))) {
+		_ = out.Chmod(0o755)
+	}
+	n, err := io.Copy(out, io.LimitReader(br, remaining+1))
 	e.bytes += n
 	if cerr := out.Close(); err == nil {
 		err = cerr
