@@ -6,7 +6,7 @@ Dikembangkan oleh **Julak Junior** ([@Julakk](https://github.com/Julakk)). Repo 
 
 ---
 
-## Status: v0.2.0
+## Status: v0.4.5
 
 Daemon udah punya kontrol Docker asli (`DockerEnvironment`), resource usage (CPU/RAM/disk), console WebSocket real-time, file manager API, dan dukungan port allocation. Mulai v0.2.0 ada TLS opsional dan endpoint `/api/system` buat versi daemon.
 
@@ -28,7 +28,7 @@ cmd/wings/main.go       → entry point
 internal/config/        → load config.json
 internal/api/            → HTTP routing + handlers + auth middleware
 internal/server/         → model Server + Manager (registry in-memory)
-internal/docker/         → interface Environment + StubEnvironment (belum ada Docker asli)
+internal/docker/         → interface Environment + DockerEnvironment asli (StubEnvironment buat test)
 ```
 
 Kenapa `Environment` dibikin interface: biar logic HTTP handler bisa ditulis & ditest sekarang (pakai `StubEnvironment` yang cuma nge-log), terus nanti tinggal diganti `DockerEnvironment` asli tanpa ubah kode API sama sekali.
@@ -44,6 +44,24 @@ Semua endpoint butuh header `Authorization: Bearer {auth_token}` (token yang sam
 | POST | `/api/servers/{uuid}/power` | Start/stop/restart/kill |
 | POST | `/api/servers/{uuid}/commands` | Kirim command ke console |
 | DELETE | `/api/servers/{uuid}` | Hapus server |
+| GET | `/api/system` | Versi daemon, OS, arsitektur, CPU, jumlah server |
+| GET | `/api/servers/{uuid}/resources` | Resource usage (CPU/RAM/disk) |
+| PUT | `/api/servers/{uuid}/allocations` | Update port allocation container |
+| POST | `/api/servers/{uuid}/install` | Jalankan install/reinstall server |
+| GET | `/api/servers/{uuid}/install` | Status install (`idle`/`completed`/`failed`, `log`, `exit_code`) |
+| POST | `/api/servers/{uuid}/backups` | Buat backup |
+| GET | `/api/servers/{uuid}/backups/{backup}` | Status backup |
+| GET | `/api/servers/{uuid}/backups/{backup}/download` | Download backup |
+| DELETE | `/api/servers/{uuid}/backups/{backup}` | Hapus backup |
+| POST | `/api/servers/{uuid}/backups/{backup}/restore` | Restore backup |
+| GET | `/api/servers/{uuid}/restore` | Status restore |
+| GET | `/api/servers/{uuid}/files/list` | List isi folder |
+| GET | `/api/servers/{uuid}/files/contents` | Baca isi file |
+| POST | `/api/servers/{uuid}/files/write` | Tulis file |
+| POST | `/api/servers/{uuid}/files/mkdir` | Bikin folder |
+| POST | `/api/servers/{uuid}/files/rename` | Rename/pindah file |
+| POST | `/api/servers/{uuid}/files/delete` | Hapus file/folder |
+| GET | `/api/servers/{uuid}/ws/console` | WebSocket console real-time |
 
 ## Konfigurasi TLS (opsional)
 
@@ -87,6 +105,9 @@ go test ./...
 - [x] WebSocket console real-time
 - [x] File manager API + SFTP server
 - [x] TLS opsional + `/api/system` (v0.2.0)
+- [x] Port allocation diterapkan ke container (v0.4.1)
+- [x] Backup + restore lewat API (v0.4.1 sampai v0.4.2)
+- [x] Install/reinstall server + status install tahan restart (v0.4.3 sampai v0.4.5)
 
 ## License
 
