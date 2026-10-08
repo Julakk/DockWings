@@ -75,7 +75,7 @@ Semua endpoint butuh header `Authorization: Bearer {auth_token}` (token yang sam
 
 ## Setup Development
 
-Butuh Go 1.22+.
+Butuh Go 1.26+ (sesuai `go.mod`).
 
 ```bash
 git clone https://github.com/Julakk/DockWings.git
