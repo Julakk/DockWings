@@ -2,6 +2,17 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.5.1] - 2026-10-09
+> "Panel bisa lihat uptime dan trafik network server." 🐧
+
+### Added
+
+- `GET /api/servers/{uuid}/resources` sekarang juga mengirim `uptime_ms` (sejak container start), `network_rx_bytes`, dan `network_tx_bytes` (total sejak container start, semua interface kecuali loopback). Nilainya 0 kalau server mati.
+
+### Changed
+
+- Versi daemon jadi 0.5.1.
+
 ## [0.5.0] - 2026-10-09
 > "SFTP akhirnya beneran ada: login pakai akun Panel, terkurung di folder server." 🐧
 

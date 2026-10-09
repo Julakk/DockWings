@@ -10,12 +10,16 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Resources adalah snapshot utilisasi container saat ini.
 type Resources struct {
 	State       string
 	CPUAbsolute float64 // persen, ex: 12.34
+	UptimeMs    int64   // ms sejak container start (0 kalau mati)
+	NetRxBytes  int64   // total byte masuk sejak container start
+	NetTxBytes  int64   // total byte keluar sejak container start
 	MemoryBytes int64
 	DiskBytes   int64
 }
@@ -112,6 +116,17 @@ func (e *DockerEnvironment) Resources(ctx context.Context, s *server.Server) (Re
 				}
 				if mem, err := parseMemUsageBytes(parts[1]); err == nil {
 					res.MemoryBytes = mem
+				}
+			}
+		}
+	}
+
+	if res.State == "running" {
+		if out, err := run(ctx, "inspect", "-f", "{{.State.Pid}} {{.State.StartedAt}}", s.ContainerName()); err == nil {
+			if f := strings.Fields(out); len(f) == 2 {
+				res.UptimeMs = uptimeMs(f[1], time.Now())
+				if pid, err := strconv.Atoi(f[0]); err == nil {
+					res.NetRxBytes, res.NetTxBytes = containerNet(pid)
 				}
 			}
 		}

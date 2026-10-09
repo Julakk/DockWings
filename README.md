@@ -6,7 +6,7 @@ Dikembangkan oleh **Julak Junior** ([@Julakk](https://github.com/Julakk)). Repo 
 
 ---
 
-## Status: v0.5.0
+## Status: v0.5.1
 
 Daemon udah punya kontrol Docker asli (`DockerEnvironment`), resource usage (CPU/RAM/disk), console WebSocket real-time, file manager API, dan dukungan port allocation. Mulai v0.2.0 ada TLS opsional dan endpoint `/api/system` buat versi daemon.
 
@@ -45,7 +45,7 @@ Semua endpoint butuh header `Authorization: Bearer {auth_token}` (token yang sam
 | POST | `/api/servers/{uuid}/commands` | Kirim command ke console |
 | DELETE | `/api/servers/{uuid}` | Hapus server |
 | GET | `/api/system` | Versi daemon, OS, arsitektur, CPU, jumlah server |
-| GET | `/api/servers/{uuid}/resources` | Resource usage (CPU/RAM/disk) |
+| GET | `/api/servers/{uuid}/resources` | Resource usage (CPU/RAM/disk), uptime, dan network |
 | PUT | `/api/servers/{uuid}/allocations` | Update port allocation container |
 | POST | `/api/servers/{uuid}/install` | Jalankan install/reinstall server |
 | GET | `/api/servers/{uuid}/install` | Status install (`idle`/`completed`/`failed`, `log`, `exit_code`) |

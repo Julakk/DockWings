@@ -230,9 +230,12 @@ func (h *Handlers) Resources(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"current_state": res.State,
 		"utilization": map[string]any{
-			"cpu_absolute": res.CPUAbsolute,
-			"memory_bytes": res.MemoryBytes,
-			"disk_bytes":   res.DiskBytes,
+			"cpu_absolute":     res.CPUAbsolute,
+			"memory_bytes":     res.MemoryBytes,
+			"disk_bytes":       res.DiskBytes,
+			"uptime_ms":        res.UptimeMs,
+			"network_rx_bytes": res.NetRxBytes,
+			"network_tx_bytes": res.NetTxBytes,
 		},
 	})
 }
