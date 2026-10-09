@@ -4,11 +4,13 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"path/filepath"
 
 	"github.com/Julakk/DockWings/internal/api"
 	"github.com/Julakk/DockWings/internal/config"
 	"github.com/Julakk/DockWings/internal/docker"
 	"github.com/Julakk/DockWings/internal/server"
+	"github.com/Julakk/DockWings/internal/sftpd"
 	"github.com/Julakk/DockWings/internal/version"
 )
 
@@ -28,6 +30,27 @@ func main() {
 	env := docker.NewDockerEnvironment(cfg.DataDirectory)
 
 	router := api.NewRouter(mgr, env, cfg.AuthToken, api.WithFilesRoot(cfg.DataDirectory), api.WithBackups(cfg.DataDirectory, cfg.BackupDirectory))
+
+	if cfg.PanelURL != "" && cfg.SFTPAddr != "" {
+		hk, hkErr := sftpd.LoadOrCreateHostKey(filepath.Join(filepath.Dir(cfg.DataDirectory), "sftp_host_ed25519_key"))
+		if hkErr != nil {
+			log.Printf("SFTP nonaktif: %v", hkErr)
+		} else {
+			sf := sftpd.New(sftpd.Config{
+				DataRoot: cfg.DataDirectory,
+				HostKey:  hk,
+				Auth:     sftpd.NewPanelAuth(cfg.PanelURL, cfg.AuthToken),
+			})
+			go func() {
+				if err := sf.ListenAndServe(cfg.SFTPAddr); err != nil {
+					log.Printf("SFTP berhenti: %v", err)
+				}
+			}()
+			log.Printf("SFTP jalan di %s", cfg.SFTPAddr)
+		}
+	} else {
+		log.Printf("SFTP nonaktif (isi panel_url di config.json buat mengaktifkan)")
+	}
 
 	scheme := "http"
 	if cfg.SSL.Enabled {

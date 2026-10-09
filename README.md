@@ -6,7 +6,7 @@ Dikembangkan oleh **Julak Junior** ([@Julakk](https://github.com/Julakk)). Repo 
 
 ---
 
-## Status: v0.4.8
+## Status: v0.5.0
 
 Daemon udah punya kontrol Docker asli (`DockerEnvironment`), resource usage (CPU/RAM/disk), console WebSocket real-time, file manager API, dan dukungan port allocation. Mulai v0.2.0 ada TLS opsional dan endpoint `/api/system` buat versi daemon.
 
@@ -67,6 +67,11 @@ Semua endpoint butuh header `Authorization: Bearer {auth_token}` (token yang sam
 | POST | `/api/servers/{uuid}/files/pull` | Download file dari URL (http/https, IP publik saja) |
 | GET | `/api/servers/{uuid}/ws/console` | WebSocket console real-time |
 
+## SFTP
+
+Aktif kalau `panel_url` diisi di `config.json` (contoh: `"panel_url": "https://panel.contoh.com"`). Login:
+username `<email-akun>.<8 karakter pertama uuid server>`, password = password akun Panel. Port ikut `sftp_addr` (default `:2022`), jangan lupa dibuka di firewall.
+
 ## Konfigurasi TLS (opsional)
 
 ```json
@@ -107,7 +112,8 @@ go test ./...
 - [x] `DockerEnvironment` asli
 - [x] Resource usage reporting ke Panel
 - [x] WebSocket console real-time
-- [x] File manager API + SFTP server
+- [x] File manager API
+- [x] SFTP server (v0.5.0)
 - [x] TLS opsional + `/api/system` (v0.2.0)
 - [x] Port allocation diterapkan ke container (v0.4.1)
 - [x] Backup + restore lewat API (v0.4.1 sampai v0.4.2)

@@ -15,6 +15,10 @@ type Config struct {
 	// SFTPAddr — alamat + port buat SFTP server, ex: ":2022"
 	SFTPAddr string `json:"sftp_addr"`
 
+	// PanelURL — alamat Panel (sebaiknya https). Dipakai buat verifikasi login SFTP.
+	// Kosong = server SFTP nggak dijalankan.
+	PanelURL string `json:"panel_url"`
+
 	// AuthToken — shared secret yang dipakai buat validasi request dari Panel.
 	// Harus sama persis sama "daemon_token" yang di-generate Panel pas bikin Node.
 	AuthToken string `json:"auth_token"`

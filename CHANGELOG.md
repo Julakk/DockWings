@@ -2,6 +2,21 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.5.0] - 2026-10-09
+> "SFTP akhirnya beneran ada: login pakai akun Panel, terkurung di folder server." 🐧
+
+### Added
+
+- Server SFTP bawaan (port `sftp_addr`, default `:2022`). Login diverifikasi ke Panel lewat `POST /api/remote/sftp/auth`, jadi akun, password, dan hak subuser (read-only atau tulis) ikut aturan Panel.
+- Tiap user dikurung di folder servernya dengan resolver yang sama seperti file manager: path `..` dan symlink ke luar folder ditolak. Symlink/hardlink nggak bisa dibuat, dan chmod dibatasi ke 0755/0644.
+- Host key ed25519 dibikin otomatis di `/var/lib/dockwings/sftp_host_ed25519_key` (mode 600) dan dipertahankan antar-restart.
+- Config baru `panel_url` (contoh `https://panel.contoh.com`). Kalau kosong, SFTP nggak dijalankan.
+- Hanya subsystem `sftp`; shell, exec, dan port forwarding ditolak. Batas 128 koneksi bersamaan dan 30 detik buat handshake + login.
+
+### Changed
+
+- Versi daemon jadi 0.5.0. Dependency baru: `golang.org/x/crypto` dan `github.com/pkg/sftp`.
+
 ## [0.4.8] - 2026-10-08
 > "Kompres, atur izin, dan download file dari URL langsung di server." 🐧
 
