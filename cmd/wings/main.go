@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/Julakk/DockWings/internal/api"
 	"github.com/Julakk/DockWings/internal/config"
@@ -29,10 +30,18 @@ func main() {
 	// ke tahap integrasi Docker (butuh VPS buat testing).
 	env := docker.NewDockerEnvironment(cfg.DataDirectory)
 
-	router := api.NewRouter(mgr, env, cfg.AuthToken, api.WithFilesRoot(cfg.DataDirectory), api.WithBackups(cfg.DataDirectory, cfg.BackupDirectory))
+	router := api.NewRouter(
+		mgr, env, cfg.AuthToken,
+		api.WithFilesRoot(cfg.DataDirectory),
+		api.WithBackups(cfg.DataDirectory, cfg.BackupDirectory),
+	)
 
 	if cfg.PanelURL != "" && cfg.SFTPAddr != "" {
-		hk, hkErr := sftpd.LoadOrCreateHostKey(filepath.Join(filepath.Dir(cfg.DataDirectory), "sftp_host_ed25519_key"))
+		keyPath := filepath.Join(
+			filepath.Dir(cfg.DataDirectory),
+			"sftp_host_ed25519_key",
+		)
+		hk, hkErr := sftpd.LoadOrCreateHostKey(keyPath)
 		if hkErr != nil {
 			log.Printf("SFTP nonaktif: %v", hkErr)
 		} else {
@@ -49,20 +58,34 @@ func main() {
 			log.Printf("SFTP jalan di %s", cfg.SFTPAddr)
 		}
 	} else {
-		log.Printf("SFTP nonaktif (isi panel_url di config.json buat mengaktifkan)")
+		log.Printf("SFTP nonaktif (isi panel_url di config.json)")
 	}
 
 	scheme := "http"
 	if cfg.SSL.Enabled {
 		scheme = "https"
+	} else {
+		log.Printf("PERINGATAN: ssl.enabled=false.")
+		log.Printf("auth_token lewat jaringan tanpa enkripsi.")
+		log.Printf("Aktifkan ssl atau pasang reverse proxy HTTPS.")
 	}
-	log.Printf("DockWings v%s jalan di %s://%s (Docker environment)", version.Version, scheme, cfg.ListenAddr)
+	log.Printf("DockWings v%s jalan di %s://%s", version.Version, scheme, cfg.ListenAddr)
+
+	// Timeout cuma di header + idle, bukan Read/WriteTimeout, supaya
+	// upload/download besar dan WebSocket console tetap normal.
+	srv := &http.Server{
+		Addr:              cfg.ListenAddr,
+		Handler:           router,
+		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       2 * time.Minute,
+		MaxHeaderBytes:    1 << 16,
+	}
 
 	var serveErr error
 	if cfg.SSL.Enabled {
-		serveErr = http.ListenAndServeTLS(cfg.ListenAddr, cfg.SSL.Cert, cfg.SSL.Key, router)
+		serveErr = srv.ListenAndServeTLS(cfg.SSL.Cert, cfg.SSL.Key)
 	} else {
-		serveErr = http.ListenAndServe(cfg.ListenAddr, router)
+		serveErr = srv.ListenAndServe()
 	}
 	if serveErr != nil {
 		log.Fatalf("server berhenti: %v", serveErr)
