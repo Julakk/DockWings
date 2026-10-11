@@ -121,4 +121,4 @@ go test ./...
 
 ## License
 
-MIT
+AGPL-3.0. Lihat [LICENSE](LICENSE).
