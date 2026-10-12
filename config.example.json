@@ -4,6 +4,8 @@
   "auth_token": "GANTI_DENGAN_DAEMON_TOKEN_DARI_PANEL",
   "docker_socket": "/var/run/docker.sock",
   "data_directory": "/var/lib/dockwings/servers",
+  "container_uid": 988,
+  "container_gid": 988,
   "ssl": {
     "enabled": false,
     "cert": "/etc/letsencrypt/live/NODE_FQDN/fullchain.pem",

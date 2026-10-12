@@ -32,6 +32,12 @@ type Config struct {
 	// BackupDirectory — folder arsip backup server (tar.gz). Jangan di dalam DataDirectory.
 	BackupDirectory string `json:"backup_directory"`
 
+	// ContainerUID/ContainerGID — user proses game di dalam container (non-root),
+	// mirip user `pterodactyl` di Wings. Folder data server dimiliki user ini.
+	// Isi 0 buat mematikan (perilaku lama: container jalan sesuai image).
+	ContainerUID int `json:"container_uid"`
+	ContainerGID int `json:"container_gid"`
+
 	// SSL — TLS opsional buat HTTP API, mirip blok `api.ssl` di Wings Pterodactyl.
 	// Kalau Enabled=true, Node di Panel harus pakai scheme https.
 	// Kalau false (default), Node di Panel harus pakai scheme http.
@@ -54,6 +60,8 @@ func Default() Config {
 		DockerSocket:    "/var/run/docker.sock",
 		DataDirectory:   "/var/lib/dockwings/servers",
 		BackupDirectory: "/var/lib/dockwings/backups",
+		ContainerUID:    988,
+		ContainerGID:    988,
 	}
 }
 

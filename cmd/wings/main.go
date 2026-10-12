@@ -29,6 +29,7 @@ func main() {
 	// TODO: ganti ke DockerEnvironment asli begitu development lanjut
 	// ke tahap integrasi Docker (butuh VPS buat testing).
 	env := docker.NewDockerEnvironment(cfg.DataDirectory)
+	env.SetUser(cfg.ContainerUID, cfg.ContainerGID)
 
 	router := api.NewRouter(
 		mgr, env, cfg.AuthToken,

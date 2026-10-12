@@ -14,7 +14,8 @@ import (
 
 // DockerEnvironment ngontrol container lewat Docker CLI.
 type DockerEnvironment struct {
-	dataDir string
+	dataDir  string
+	uid, gid int // user proses container, lihat SetUser (0 = mati)
 }
 
 func NewDockerEnvironment(dataDir string) *DockerEnvironment {
@@ -70,6 +71,11 @@ func (e *DockerEnvironment) create(s *server.Server, pull bool) error {
 		"--security-opt=no-new-privileges",
 		"--pids-limit=512",
 	}
+	if u := e.userSpec(); u != "" {
+		// Proses game jalan sebagai user non-root (kayak Wings Pterodactyl).
+		// HOME ke folder data, biar npm/pip/java bisa nulis cache di sana.
+		args = append(args, "--user", u, "-e", "HOME=/home/container")
+	}
 	if s.MemoryLimitMB > 0 {
 		args = append(args, fmt.Sprintf("--memory=%dm", s.MemoryLimitMB))
 		if s.SwapMB < 0 {
@@ -123,6 +129,10 @@ func (e *DockerEnvironment) create(s *server.Server, pull bool) error {
 }
 
 func (e *DockerEnvironment) Start(ctx context.Context, s *server.Server) error {
+	if err := e.ensureOwnership(ctx, s); err != nil {
+		s.Status = server.StatusOffline
+		return fmt.Errorf("gagal set kepemilikan file server: %w", err)
+	}
 	// Pernah dinyalakan = nyala lagi otomatis setelah reboot host, kecuali di-Stop/Kill manual.
 	// Dipasang di sini (bukan di Create) biar server yang belum pernah di-Start nggak ikut jalan sendiri.
 	_, _ = run(ctx, "update", "--restart=unless-stopped", s.ContainerName())
