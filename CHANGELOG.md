@@ -2,6 +2,20 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.5.2] - 2026-10-12
+> "Hardening: timeout HTTP server dan peringatan kalau SSL mati." 🐧
+
+### Security
+
+- HTTP server daemon sekarang punya timeout.
+- Daemon mencatat peringatan di log kalau SSL nonaktif.
+
+### Changed
+
+- `wings.log` nggak lagi dilacak Git.
+- Lisensi diganti ke AGPL-3.0.
+- Versi daemon jadi 0.5.2.
+
 ## [0.5.1] - 2026-10-09
 > "Panel bisa lihat uptime dan trafik network server." 🐧
 
