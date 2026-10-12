@@ -30,6 +30,7 @@ func main() {
 	// ke tahap integrasi Docker (butuh VPS buat testing).
 	env := docker.NewDockerEnvironment(cfg.DataDirectory)
 	env.SetUser(cfg.ContainerUID, cfg.ContainerGID)
+	go env.RunCrashWatchdog()
 
 	router := api.NewRouter(
 		mgr, env, cfg.AuthToken,
