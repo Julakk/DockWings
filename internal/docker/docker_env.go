@@ -113,11 +113,7 @@ func (e *DockerEnvironment) create(s *server.Server, pull bool) error {
 	for k, v := range s.EnvVariables {
 		args = append(args, "-e", k+"="+v)
 	}
-	if s.StartupCommand != "" {
-		args = append(args, "--entrypoint", "/bin/sh", s.Image, "-c", s.StartupCommand)
-	} else {
-		args = append(args, s.Image)
-	}
+	args = append(args, startupArgs(s.Image, s.StartupCommand)...)
 
 	if _, err := run(ctx, args...); err != nil {
 		s.Status = "error"

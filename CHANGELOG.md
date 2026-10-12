@@ -2,6 +2,18 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.5.3] - 2026-10-13
+> "Egg Pterodactyl yang memakai sintaks bash sekarang bisa jalan." 🐧
+
+### Fixed
+
+- Start command dijalankan lewat `/bin/bash` kalau image punya, dan jatuh ke `/bin/sh` kalau tidak. Sebelumnya selalu `/bin/sh`, sehingga egg yang memakai `[[ ... ]]` (misalnya Python dan Node.js generic) gagal dengan pesan `[[: not found` di console.
+
+### Changed
+
+- Berlaku untuk container yang dibuat setelah update. Container yang sudah ada tidak berubah.
+- Versi daemon jadi 0.5.3.
+
 ## [0.5.2] - 2026-10-12
 > "Hardening: timeout HTTP server dan peringatan kalau SSL mati." 🐧
 
