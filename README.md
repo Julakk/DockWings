@@ -4,6 +4,8 @@
 
 Dikembangkan oleh **Julak Junior** ([@Julakk](https://github.com/Julakk)). Repo terpisah dari [DockPanel](https://github.com/Julakk/DockPanel) (Laravel), sesuai pola Panel/Wings di Pterodactyl.
 
+**Dokumentasi:** https://julakk.github.io/docs/
+
 ---
 
 ## Status: v0.5.1
