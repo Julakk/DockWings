@@ -3,4 +3,4 @@
 package version
 
 // Version — versi rilis DockWings saat ini.
-var Version = "0.5.3"
+var Version = "0.5.4"

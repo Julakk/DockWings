@@ -50,6 +50,7 @@ func NewRouter(mgr *server.Manager, env docker.Environment, authToken string, op
 	}
 
 	h := NewHandlers(mgr, env)
+	h.DataRoot = cfg.filesRoot
 
 	protected := http.NewServeMux()
 	protected.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {

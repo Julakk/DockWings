@@ -2,6 +2,18 @@
 
 Semua perubahan penting di project ini dicatat di sini.
 
+## [0.5.4] - 2026-10-13
+> "Hapus server sekaligus datanya, kalau diminta." 🐧
+
+### Added
+
+- `DELETE /api/servers/{uuid}?purge=1` ikut menghapus folder data server. Hanya untuk uuid kanonik, dan folder yang berupa symlink ditolak. Respons membawa `purged: true` atau `false`. Kalau penghapusan folder gagal, server tetap tercatat supaya bisa dicoba lagi.
+
+### Changed
+
+- Tanpa `purge`, perilaku lama tetap: container dihapus, folder data dipertahankan.
+- Versi daemon jadi 0.5.4.
+
 ## [0.5.3] - 2026-10-13
 > "Egg Pterodactyl yang memakai sintaks bash sekarang bisa jalan." 🐧
 

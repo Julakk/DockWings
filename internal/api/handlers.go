@@ -18,6 +18,9 @@ type Handlers struct {
 
 	// Installing (opsional) dipakai buat nolak start/hapus server yang lagi di-install.
 	Installing func(uuid string) bool
+
+	// DataRoot (opsional) = data_directory. Dipakai DELETE ...?purge=1 untuk menghapus folder data server.
+	DataRoot string
 }
 
 func NewHandlers(mgr *server.Manager, env docker.Environment) *Handlers {
@@ -191,14 +194,32 @@ func (h *Handlers) DeleteServer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	purge := r.URL.Query().Get("purge") == "1" || r.URL.Query().Get("purge") == "true"
+	if purge && !canonicalUUIDRe.MatchString(uuid) {
+		writeError(w, http.StatusBadRequest, "purge cuma untuk server dengan uuid kanonik")
+		return
+	}
+
 	if err := h.Env.Remove(r.Context(), s); err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
+	purged := false
+	if purge {
+		// Container sudah hilang. Kalau folder gagal dihapus, server tetap tercatat
+		// supaya Panel bisa mencoba lagi (Remove idempotent).
+		ok, err := purgeServerData(h.DataRoot, uuid)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "gagal menghapus data server: "+err.Error())
+			return
+		}
+		purged = ok
+	}
+
 	h.Manager.Remove(uuid)
 
-	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+	writeJSON(w, http.StatusOK, map[string]any{"success": true, "purged": purged})
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload any) {
